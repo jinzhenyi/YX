@@ -4,31 +4,62 @@
       "id": 1,
       "title": "俄罗斯方块",
       "file": "俄罗斯方块.html",
-      "category": "经典"
+      "category": "经典",
+      "description": "经典俄罗斯方块游戏，挑战你的反应速度和空间规划能力。",
+      "icon": "fa-shapes",
+      "author": "jzy",
+      "version": "1.0"
     },
     {
       "id": 2,
       "title": "贪吃蛇",
       "file": "贪吃蛇.html",
-      "category": "休闲"
+      "category": "休闲",
+      "description": "经典贪吃蛇游戏，控制小蛇吃掉食物，避免撞到自己。",
+      "icon": "fa-snake",
+      "author": "jzy",
+      "version": "1.0"
     },
     {
       "id": 3,
       "title": "扫雷",
       "file": "扫雷.html",
-      "category": "益智"
+      "category": "益智",
+      "description": "经典扫雷游戏，通过推理找出所有地雷的位置。",
+      "icon": "fa-bomb",
+      "author": "jzy",
+      "version": "1.0"
     },
     {
       "id": 4,
       "title": "2048",
       "file": "2048.html",
-      "category": "益智"
+      "category": "益智",
+      "description": "数字合并游戏，滑动合并相同数字，尝试达到2048。",
+      "icon": "fa-layer-group",
+      "author": "jzy",
+      "version": "1.0"
     },
     {
       "id": 5,
       "title": "消消乐",
       "file": "消消乐.html",
-      "category": "益智"
+      "category": "益智",
+      "description": "三消游戏，交换相邻元素，三个或以上相同即可消除。",
+      "icon": "fa-gem",
+      "author": "jzy",
+      "version": "1.0"
+    },
+    {
+      "id": 6,
+      "title": "轮回勇者传说",
+      "file": "lhyzch/index.html",
+      "category": "角色扮演",
+      "description": "一款开源的Roguelike角色扮演游戏，拥有丰富的剧情和随机生成的地下城。",
+      "icon": "fa-dragon",
+      "author": "couy69@gmail.com",
+      "license": "MIT",
+      "version": "1.3.3"
     }
   ]
 }
