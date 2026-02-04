@@ -73,13 +73,13 @@
             letter-spacing: 0px; /* 负值使字母更紧密 */
             display: flex;
         }
-        
+
         .color-logo span {
             display: inline-block;
             transition: transform 0.2s ease;
             margin-right: 0px; /* 负边距移除字母间空隙 */
         }
-        
+
         .color-logo:hover span:nth-child(1) { transform: translateY(-4px) rotate(-3deg); }
         .color-logo:hover span:nth-child(2) { transform: translateY(-6px) rotate(2deg); }
         .color-logo:hover span:nth-child(3) { transform: translateY(-8px) rotate(4deg); }
@@ -87,7 +87,7 @@
         .color-logo:hover span:nth-child(5) { transform: translateY(-7px) rotate(3deg); }
         .color-logo:hover span:nth-child(6) { transform: translateY(-3px) rotate(-1deg); }
         .color-logo:hover span:nth-child(7) { transform: translateY(-5px) rotate(2deg); }
-        
+
         .color-logo span:nth-child(1) { color: #4285F4; } /* j */
         .color-logo span:nth-child(2) { color: #EA4335; } /* z */
         .color-logo span:nth-child(3) { color: #FBBC05; } /* y */
@@ -273,6 +273,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
+            /* 默认背景色，会在JS中动态设置 */
             background: linear-gradient(135deg, #4361ee, #4895ef);
         }
 
@@ -309,6 +310,31 @@
             display: inline-block;
             margin: 0 auto 10px;
             font-weight: 600;
+        }
+
+        /* 新增的游戏信息样式 */
+        .game-description {
+            font-size: 0.85rem;
+            color: #666;
+            margin: 10px 0;
+            line-height: 1.4;
+            text-align: center;
+            flex-grow: 1;
+        }
+
+        .game-meta {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+            margin: 5px 0;
+            font-size: 0.8rem;
+            color: #666;
+        }
+
+        .game-meta i {
+            font-size: 0.8rem;
+            color: #888;
         }
 
         .play-btn {
@@ -391,7 +417,7 @@
             .games-grid {
                 grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
             }
-            
+
             .color-logo {
                 font-size: 1.8rem;
             }
@@ -401,7 +427,7 @@
             .games-grid {
                 grid-template-columns: 1fr;
             }
-            
+
             .color-logo {
                 font-size: 1.5rem;
             }
@@ -478,7 +504,6 @@
         const gameCount = document.getElementById('game-count');
         const loader = document.getElementById('loader');
         const searchInput = document.getElementById('search-input');
-        const reloadBtn = document.getElementById('reload-btn');
 
         // 存储游戏数据
         let gamesData = [];
@@ -487,9 +512,6 @@
         document.addEventListener('DOMContentLoaded', () => {
             // 加载游戏数据
             loadGames();
-
-            // 设置重新加载按钮
-            reloadBtn.addEventListener('click', loadGames);
 
             // 设置搜索功能
             searchInput.addEventListener('input', filterGames);
@@ -534,6 +556,32 @@
             }
         }
 
+        // 根据游戏类别返回背景颜色
+        function getCategoryColor(category) {
+            const colorMap = {
+                '角色扮演': 'linear-gradient(135deg, #8B4513, #D2691E)',
+                '益智': 'linear-gradient(135deg, #4CAF50, #8BC34A)',
+                '动作': 'linear-gradient(135deg, #FF5722, #FF9800)',
+                '策略': 'linear-gradient(135deg, #9C27B0, #E91E63)',
+                '休闲': 'linear-gradient(135deg, #00BCD4, #03A9F4)',
+                '冒险': 'linear-gradient(135deg, #FF9800, #FFC107)'
+            };
+            return colorMap[category] || 'linear-gradient(135deg, #4361ee, #4895ef)';
+        }
+
+        // 根据游戏类别返回图标
+        function getCategoryIcon(category) {
+            const iconMap = {
+                '角色扮演': 'fa-dragon',
+                '益智': 'fa-puzzle-piece',
+                '动作': 'fa-running',
+                '策略': 'fa-chess',
+                '休闲': 'fa-coffee',
+                '冒险': 'fa-mountain'
+            };
+            return iconMap[category] || 'fa-gamepad';
+        }
+
         // 渲染游戏
         function renderGames(games) {
             gamesGrid.innerHTML = '';
@@ -551,17 +599,49 @@
             games.forEach(game => {
                 const gameCard = document.createElement('div');
                 gameCard.className = 'game-card';
+                
+                // 确定图标和背景颜色
+                const icon = game.icon || getCategoryIcon(game.category);
+                const bgColor = getCategoryColor(game.category);
+                
                 gameCard.innerHTML = `
-                    <div class="card-img">
-                        <i class="fas fa-gamepad"></i>
+                    <div class="card-img" style="background: ${bgColor}">
+                        <i class="fas ${icon}"></i>
                         <h3 class="game-title">${game.title}</h3>
                     </div>
                     <div class="card-content">
                         ${game.category ? `<span class="game-category">${game.category}</span>` : ''}
+                        
+                        ${game.description ? `
+                            <p class="game-description">${game.description}</p>
+                        ` : ''}
+                        
+                        ${game.author ? `
+                            <div class="game-meta">
+                                <i class="fas fa-user"></i>
+                                <span>${game.author}</span>
+                            </div>
+                        ` : ''}
+                        
+                        ${game.license ? `
+                            <div class="game-meta">
+                                <i class="fas fa-balance-scale"></i>
+                                <span>${game.license}许可证</span>
+                            </div>
+                        ` : ''}
+                        
+                        ${game.version ? `
+                            <div class="game-meta">
+                                <i class="fas fa-tag"></i>
+                                <span>版本: ${game.version}</span>
+                            </div>
+                        ` : ''}
+                        
                         <p class="file-info">
                             <i class="fas fa-file-code"></i> ${game.file}
                         </p>
-                        <a href="${game.file}" class="play-btn">
+                        
+                        <a href="${game.file}" class="play-btn" ${game.external ? 'target="_blank"' : ''}>
                             <i class="fas fa-play"></i> 开始游戏
                         </a>
                     </div>
@@ -583,6 +663,8 @@
             const filteredGames = gamesData.filter(game => 
                 game.title.toLowerCase().includes(searchTerm) || 
                 (game.category && game.category.toLowerCase().includes(searchTerm)) ||
+                (game.description && game.description.toLowerCase().includes(searchTerm)) ||
+                (game.author && game.author.toLowerCase().includes(searchTerm)) ||
                 game.file.toLowerCase().includes(searchTerm)
             );
 
