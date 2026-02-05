@@ -11,6 +11,9 @@
 - **作者**: couy69@gmail.com
 - **原项目**: [https://github.com/Couy69/vue-idle-game]
 - **说明**: 一款开源的Roguelike角色扮演游戏
+### 2. 其他
+- **许可证**: MIT License
+- **作者**: jinzhenyi
 
 ## 许可证说明
 
