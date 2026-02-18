@@ -8,7 +8,7 @@ from xml.dom import minidom
 
 # ====== 网站配置（请修改为您的实际信息）======
 SITE_TITLE = "游戏合集"
-SITE_URL = "https://jzy.github.io"  # GitHub Pages 地址
+SITE_URL = "https://jzygame.dpdns.org"  # GitHub Pages 地址
 SITE_DESCRIPTION = "独立游戏集合"
 RSS_FILE = "rss.xml"
 DATA_FILE = "games.json"  # 位于根目录
