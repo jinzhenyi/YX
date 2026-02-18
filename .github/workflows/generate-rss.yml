@@ -1,0 +1,43 @@
+name: Generate RSS Feed
+
+on:
+  push:
+    branches:
+      - main  # 或您的主分支
+    paths:
+      - 'games.json'       # 仅当 games.json 变化时触发（也可根据需要添加其他路径）
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # 获取完整历史，以便获取每个文件的提交时间
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Generate RSS
+        run: python .github/scripts/generate_rss.py
+
+      - name: Check for changes
+        id: git-check
+        run: |
+          git diff --quiet rss.xml || echo "changed=true" >> $GITHUB_OUTPUT
+
+      - name: Commit and push if changed
+        if: steps.git-check.outputs.changed == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add rss.xml
+          git commit -m "自动更新 RSS 订阅文件 [skip ci]"
+          git push
