@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>显示文本文件内容</title>
+    <style>
+        #filecontent {
+            font-family: monospace; /* 使用等宽字体显示文本文件内容 */
+            white-space: pre-wrap; /* 保留空白符序列，但是正常地进行换行 */
+            word-wrap: break-word; /* 防止长单词溢出容器 */
+        }
+    </style>
+</head>
+<body>
+    <h1>hollewould</h1>
+    <input type="file" id="fileinput" accept=".txt"> <!-- 文件输入元素，只允许选择txt文件 -->
+    <pre id="filecontent"></pre> <!-- 用于显示文本内容的<pre>元素 -->
+
+    <script>
+        document.getElementById('fileinput').addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const content = e.target.result;
+                    document.getElementById('filecontent').textContent = content;
+                };
+                reader.readAsText(file); // 读取文件内容作为文本
+            }
+        });
+    </script>
+</body>
+</html>
