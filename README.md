@@ -18,7 +18,7 @@
 ## 许可证说明
 
 本项目包含多个开源游戏，每个游戏都遵循其原始许可证：
-- 轮回勇者传说: MIT License © 2020 couy69@gmail.com
+- 轮回勇者传说: MIT License  couy69@gmail.com
 - 其他游戏: 相应许可证
 
 ## 部署
