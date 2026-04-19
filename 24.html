@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
+    <title>24点游戏 - 移动端智力挑战</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none; /* 避免移动端长按菜单，提升触感 */
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            margin: 0;
+            min-height: 100vh;
+            background: linear-gradient(145deg, #1e5a7a 0%, #16455f 100%);
+            font-family: system-ui, 'Segoe UI', 'PingFang SC', Roboto, 'Helvetica Neue', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 16px;
+        }
+
+        /* 主游戏面板 */
+        .game-container {
+            max-width: 550px;
+            width: 100%;
+            background: rgba(255, 248, 225, 0.95);
+            border-radius: 56px;
+            box-shadow: 0 20px 35px rgba(0, 0, 0, 0.3), inset 0 1px 4px rgba(255, 255, 255, 0.6);
+            overflow: hidden;
+            backdrop-filter: blur(2px);
+            transition: all 0.2s ease;
+        }
+
+        /* 头部 & 数字卡片区域 */
+        .card-area {
+            background: #fdf8ed;
+            padding: 24px 20px 20px;
+            border-bottom: 2px solid #ffcd94;
+        }
+
+        .title {
+            text-align: center;
+            font-size: 1.8rem;
+            font-weight: 800;
+            color: #c2492d;
+            letter-spacing: 2px;
+            text-shadow: 2px 2px 0 #ffdd99;
+            margin-bottom: 20px;
+        }
+
+        .cards-row {
+            display: flex;
+            justify-content: space-evenly;
+            gap: 15px;
+            flex-wrap: wrap;
+            margin: 10px 0 5px;
+        }
+
+        .card {
+            background: #fff3e0;
+            width: 70px;
+            height: 90px;
+            border-radius: 20px;
+            box-shadow: 0 8px 0 #b97f3a;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.7rem;
+            font-weight: 800;
+            color: #3b2a1f;
+            transition: all 0.1s linear;
+            cursor: pointer;
+            border: 2px solid #ffbe76;
+            background: radial-gradient(circle at 30% 20%, #fff7e8, #ffe3b5);
+        }
+
+        /* 已使用的卡片样式（禁用） */
+        .card.used {
+            background: #bdb29a;
+            box-shadow: 0 4px 0 #6b4c2c;
+            transform: translateY(4px);
+            filter: grayscale(0.3);
+            opacity: 0.7;
+            cursor: default;
+            color: #4a3e2e;
+            border-color: #a58354;
+        }
+
+        /* 卡片点击反馈 */
+        .card:active:not(.used) {
+            transform: translateY(4px);
+            box-shadow: 0 4px 0 #b97f3a;
+        }
+
+        /* 表达式显示器 */
+        .expression-panel {
+            background: #2e241f;
+            margin: 0 16px 20px 16px;
+            border-radius: 40px;
+            padding: 15px 20px;
+            box-shadow: inset 0 0 8px rgba(0,0,0,0.5), 0 5px 8px rgba(0,0,0,0.2);
+        }
+
+        .expression-label {
+            font-size: 0.8rem;
+            color: #ffcd94;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .expression-display {
+            background: #fcf7e8;
+            min-height: 70px;
+            border-radius: 32px;
+            padding: 12px 18px;
+            font-family: 'Courier New', 'Fira Code', monospace;
+            font-size: 1.5rem;
+            font-weight: 600;
+            word-break: break-all;
+            color: #2c3e2f;
+            line-height: 1.3;
+            letter-spacing: 1px;
+            box-shadow: inset 0 1px 4px #aaa;
+        }
+
+        /* 按钮区域 */
+        .buttons-area {
+            padding: 8px 16px 28px;
+        }
+
+        .btn-grid {
+            display: grid;
+            grid-template-columns: repeat(5, 1fr);
+            gap: 12px;
+            margin-bottom: 18px;
+        }
+
+        .btn {
+            background: #f5e7d3;
+            border: none;
+            padding: 14px 0;
+            border-radius: 60px;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #3e2a1f;
+            box-shadow: 0 5px 0 #b48b54;
+            cursor: pointer;
+            transition: 0.05s linear;
+            text-align: center;
+            font-family: inherit;
+            letter-spacing: 2px;
+        }
+
+        .btn:active {
+            transform: translateY(3px);
+            box-shadow: 0 2px 0 #b48b54;
+        }
+
+        .btn-op {
+            background: #ffd966;
+            color: #aa4c1c;
+            font-size: 1.8rem;
+            font-weight: 800;
+        }
+
+        .btn-bracket {
+            background: #c7e0d4;
+            color: #2c6e4f;
+            font-size: 1.6rem;
+        }
+
+        .btn-action {
+            background: #dfb87a;
+            color: #2d2b26;
+            font-size: 1.2rem;
+            font-weight: 600;
+        }
+
+        .btn-submit {
+            background: #f5a65b;
+            color: white;
+            box-shadow: 0 5px 0 #b5511c;
+            font-size: 1.3rem;
+        }
+
+        .btn-reset {
+            background: #b0a790;
+            color: #2f2e2a;
+        }
+
+        .btn-new {
+            background: #4f8a6b;
+            color: white;
+            box-shadow: 0 5px 0 #2f5a42;
+        }
+
+        /* 两行特殊布局 */
+        .double-btn-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+            margin-top: 8px;
+        }
+
+        /* 消息提示 */
+        .message {
+            background: #1f2a1b;
+            margin: 10px 16px 20px;
+            border-radius: 40px;
+            padding: 10px;
+            text-align: center;
+            color: #fae672;
+            font-weight: 500;
+            font-size: 0.9rem;
+            letter-spacing: 0.5px;
+        }
+
+        /* 确保触屏按钮足够大 */
+        @media (max-width: 480px) {
+            .card {
+                width: 65px;
+                height: 85px;
+                font-size: 2.3rem;
+            }
+            .btn {
+                padding: 12px 0;
+                font-size: 1.3rem;
+            }
+            .btn-op {
+                font-size: 1.6rem;
+            }
+            .expression-display {
+                font-size: 1.2rem;
+            }
+            .btn-grid {
+                gap: 8px;
+            }
+        }
+
+        footer {
+            text-align: center;
+            font-size: 0.7rem;
+            color: #d9bc8c;
+            padding: 12px 0 18px;
+        }
+    </style>
+</head>
+<body>
+<div class="game-container">
+    <div class="card-area">
+        <div class="title">🃏 24 点 挑 战 🃏</div>
+        <div class="cards-row" id="cardsContainer"></div>
+        <div class="expression-panel">
+            <div class="expression-label">📐 当前算式</div>
+            <div class="expression-display" id="expressionDisplay"></div>
+        </div>
+    </div>
+    <div class="buttons-area">
+        <div class="btn-grid">
+            <button class="btn btn-op" data-op="+">＋</button>
+            <button class="btn btn-op" data-op="-">－</button>
+            <button class="btn btn-op" data-op="*">✕</button>
+            <button class="btn btn-op" data-op="/">÷</button>
+            <button class="btn btn-bracket" data-op="(">(</button>
+            <button class="btn btn-bracket" data-op=")">)</button>
+            <button class="btn btn-action" id="delBtn">⌫ 删除</button>
+            <button class="btn btn-action" id="clearBtn">🗑️ 清空</button>
+            <button class="btn btn-submit" id="submitBtn">✓ 提交</button>
+            <button class="btn btn-new" id="newGameBtn">✨ 新一局</button>
+        </div>
+        <div class="message" id="messageArea">
+            🧠 点击数字卡片，组合算式 → 每张卡只能用一次！目标 24
+        </div>
+    </div>
+    <footer>⚡ 使用 + - × ÷ 和括号，每个数字恰好一次</footer>
+</div>
+
+<script>
+    // ---------- 游戏核心 ----------
+    // 卡片数据结构: { id, value, used }
+    let cards = [];
+    let nextCardId = 0;
+    // 表达式token数组，存储字符串元素: "12" 或 "+" 或 "(" 等
+    let tokens = [];
+    // 记录添加数字时对应的卡片id栈（与tokens中数字的顺序同步）
+    let cardIdStack = [];
+
+    // DOM 元素
+    const cardsContainer = document.getElementById('cardsContainer');
+    const expressionDisplay = document.getElementById('expressionDisplay');
+    const messageArea = document.getElementById('messageArea');
+
+    // 辅助: 显示消息
+    function setMessage(msg, isError = false) {
+        messageArea.innerHTML = isError ? `⚠️ ${msg}` : `🎲 ${msg}`;
+        messageArea.style.color = isError ? '#ffbb88' : '#fae672';
+        setTimeout(() => {
+            if (messageArea.innerHTML === `⚠️ ${msg}` || messageArea.innerHTML === `🎲 ${msg}`) {
+                if(!isError) messageArea.style.color = '#fae672';
+            }
+        }, 2000);
+    }
+
+    // 刷新UI: 渲染卡片样式 & 表达式显示
+    function renderUI() {
+        // 渲染卡片
+        cardsContainer.innerHTML = '';
+        cards.forEach(card => {
+            const cardDiv = document.createElement('div');
+            cardDiv.className = `card ${card.used ? 'used' : ''}`;
+            // 显示数值，1-13，JQK可转文字 (11->J, 12->Q, 13->K)
+            let displayValue = card.value;
+            if (card.value === 11) displayValue = 'J';
+            else if (card.value === 12) displayValue = 'Q';
+            else if (card.value === 13) displayValue = 'K';
+            else displayValue = card.value;
+            cardDiv.textContent = displayValue;
+            if (!card.used) {
+                cardDiv.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    addNumberCard(card.id);
+                });
+            }
+            cardsContainer.appendChild(cardDiv);
+        });
+        // 渲染表达式
+        expressionDisplay.textContent = tokens.length === 0 ? '✨ 点击卡片构建算式' : tokens.join(' ');
+    }
+
+    // 添加数字卡片到表达式
+    function addNumberCard(cardId) {
+        const card = cards.find(c => c.id === cardId);
+        if (!card || card.used) {
+            setMessage('这张牌已经用过了！', true);
+            return;
+        }
+        // 标记为已使用
+        card.used = true;
+        // 添加数字token (直接数值字符串)
+        const numberStr = card.value.toString();
+        tokens.push(numberStr);
+        cardIdStack.push(card.id);
+        renderUI();
+        setMessage(`添加 ${card.value}`, false);
+    }
+
+    // 添加运算符或括号
+    function addOperatorOrBracket(op) {
+        // 允许添加运算符/括号到任意位置，不做严格校验，提交时由eval判断合法性
+        // 但是避免连续输入无意义，但完全交给用户，体验自由
+        tokens.push(op);
+        renderUI();
+    }
+
+    // 删除最后一个token (智能处理数字对应的卡片恢复)
+    function deleteLastToken() {
+        if (tokens.length === 0) {
+            setMessage('表达式已经是空的', true);
+            return;
+        }
+        const lastToken = tokens[tokens.length - 1];
+        // 判断最后一个token是否为数字 (纯数字字符串)
+        const isNumberToken = /^\d+$/.test(lastToken);
+        if (isNumberToken) {
+            // 恢复卡片占用
+            if (cardIdStack.length > 0) {
+                const lastCardId = cardIdStack.pop();
+                const usedCard = cards.find(c => c.id === lastCardId);
+                if (usedCard) usedCard.used = false;
+            } else {
+                // 理论上同步，但防御：若有数字token却没有卡片栈，手动恢复？
+                console.warn("token数字与卡片栈不同步");
+                // 尝试根据数值逆向恢复（不精准但可维护），但正常情况下不会发生
+                const val = parseInt(lastToken, 10);
+                const unusedCard = cards.find(c => c.used === true && c.value === val);
+                if (unusedCard) unusedCard.used = false;
+            }
+        }
+        tokens.pop();
+        renderUI();
+    }
+
+    // 完全清空表达式及重置所有卡片占用
+    function clearAll() {
+        tokens = [];
+        // 重置所有卡片占用
+        cards.forEach(card => { card.used = false; });
+        cardIdStack = [];
+        renderUI();
+        setMessage('表达式已清空，卡片重新可用', false);
+    }
+
+    // 检查表达式合法性 + 24点判断 + 数字使用完整性
+    function checkAndSubmit() {
+        // 1. 检查是否所有卡片都已使用 (每个数字必须恰好用一次)
+        const allUsed = cards.every(card => card.used === true);
+        if (!allUsed) {
+            setMessage(`还未用完所有数字！当前已使用 ${cards.filter(c=>c.used).length} / ${cards.length} 张牌`, true);
+            return;
+        }
+        
+        if (tokens.length === 0) {
+            setMessage('请先构建算式', true);
+            return;
+        }
+
+        // 拼接表达式字符串 (注意乘除号符号替换，* / 在js中正确)
+        let exprStr = tokens.join('');
+        // 替换美观的乘除符号为实际运算符号 (已经使用 * / 存储但展示为✕和÷，但存储时存的是 * / 吗？注意按钮传入的是 * 和 / ，但显示为了美观，但tokens存储就是实际运算符)
+        // 因为按钮的data-op传入的就是"*"和"/"，所以表达式直接可用。
+        // 额外安全处理: 不允许连续运算符等，交给eval捕获
+        try {
+            // 使用eval计算，注意除法必须为浮点
+            // 防止恶意代码，但表达式只由数字、运算符、括号组成，安全
+            const result = eval(exprStr);
+            // 浮点误差比较
+            const is24 = Math.abs(result - 24) < 1e-8;
+            if (is24) {
+                setMessage(`🎉 完美！${exprStr} = 24 ！ 获胜！ 🎉`, false);
+                // 胜利后自动禁用卡片提交（但保留新游戏），胜利消息提示后可选择新游戏
+                // 为了体验，不再额外动作，用户点击新游戏即可。
+                // 也可以禁止继续提交但为了界面友好不做禁止，但是显示胜利后可以继续新游戏。
+                messageArea.style.color = '#d4ff9f';
+                setTimeout(() => {
+                    if(messageArea.innerHTML.includes('获胜')) {
+                        messageArea.style.color = '#fae672';
+                    }
+                }, 3000);
+            } else {
+                setMessage(`计算结果为 ${result}，不是24哦，再试试看！`, true);
+            }
+        } catch (e) {
+            setMessage(`表达式无效: ${e.message}，请检查括号或运算符`, true);
+        }
+    }
+
+    // ---------- 24点求解器 (保证生成的牌组有解) ----------
+    // 暴力枚举所有组合，判断是否有解 (精确浮点误差)
+    function isSolveable(numbers) {
+        const eps = 1e-6;
+        const ops = ['+', '-', '*', '/'];
+        // 所有排列
+        function permute(arr) {
+            if (arr.length === 1) return [arr];
+            let result = [];
+            for (let i = 0; i < arr.length; i++) {
+                const current = arr[i];
+                const rest = [...arr.slice(0,i), ...arr.slice(i+1)];
+                const perms = permute(rest);
+                for (let perm of perms) {
+                    result.push([current, ...perm]);
+                }
+            }
+            return result;
+        }
+        // 计算表达式 (a op b)
+        function calc(a, b, op) {
+            if (op === '+') return a + b;
+            if (op === '-') return a - b;
+            if (op === '*') return a * b;
+            if (op === '/') {
+                if (Math.abs(b) < eps) return null;
+                return a / b;
+            }
+            return null;
+        }
+        // 五种括号模型
+        // 模型1: ((a,b),c),d
+        function model1(a,b,c,d,op1,op2,op3) {
+            let step1 = calc(a,b,op1);
+            if(step1 === null) return null;
+            let step2 = calc(step1,c,op2);
+            if(step2 === null) return null;
+            let step3 = calc(step2,d,op3);
+            return step3;
+        }
+        // 模型2: (a,(b,c)),d
+        function model2(a,b,c,d,op1,op2,op3) {
+            let step1 = calc(b,c,op2);
+            if(step1 === null) return null;
+            let step2 = calc(a,step1,op1);
+            if(step2 === null) return null;
+            let step3 = calc(step2,d,op3);
+            return step3;
+        }
+        // 模型3: a,((b,c),d)
+        function model3(a,b,c,d,op1,op2,op3) {
+            let step1 = calc(b,c,op2);
+            if(step1 === null) return null;
+            let step2 = calc(step1,d,op3);
+            if(step2 === null) return null;
+            let step3 = calc(a,step2,op1);
+            return step3;
+        }
+        // 模型4: a,(b,(c,d))
+        function model4(a,b,c,d,op1,op2,op3) {
+            let step1 = calc(c,d,op3);
+            if(step1 === null) return null;
+            let step2 = calc(b,step1,op2);
+            if(step2 === null) return null;
+            let step3 = calc(a,step2,op1);
+            return step3;
+        }
+        // 模型5: (a,b),(c,d)
+        function model5(a,b,c,d,op1,op2,op3) {
+            let left = calc(a,b,op1);
+            if(left === null) return null;
+            let right = calc(c,d,op3);
+            if(right === null) return null;
+            let res = calc(left,right,op2);
+            return res;
+        }
+        const permutations = permute(numbers);
+        const opCombos = [];
+        for(let i=0;i<4;i++)
+            for(let j=0;j<4;j++)
+                for(let k=0;k<4;k++)
+                    opCombos.push([ops[i], ops[j], ops[k]]);
+        for(let perm of permutations) {
+            let [p1,p2,p3,p4] = perm;
+            for(let [op1,op2,op3] of opCombos) {
+                let res1 = model1(p1,p2,p3,p4,op1,op2,op3);
+                if(res1 !== null && Math.abs(res1-24) < eps) return true;
+                let res2 = model2(p1,p2,p3,p4,op1,op2,op3);
+                if(res2 !== null && Math.abs(res2-24) < eps) return true;
+                let res3 = model3(p1,p2,p3,p4,op1,op2,op3);
+                if(res3 !== null && Math.abs(res3-24) < eps) return true;
+                let res4 = model4(p1,p2,p3,p4,op1,op2,op3);
+                if(res4 !== null && Math.abs(res4-24) < eps) return true;
+                let res5 = model5(p1,p2,p3,p4,op1,op2,op3);
+                if(res5 !== null && Math.abs(res5-24) < eps) return true;
+            }
+        }
+        return false;
+    }
+
+    // 生成随机数字 (1-13) 且有解
+    function generateSolvableNumbers() {
+        const maxAttempts = 50;
+        for(let attempt = 0; attempt < maxAttempts; attempt++) {
+            const nums = [];
+            for(let i=0;i<4;i++) {
+                let r = Math.floor(Math.random() * 13) + 1; // 1-13
+                nums.push(r);
+            }
+            if(isSolveable(nums)) {
+                return nums;
+            }
+        }
+        // 保底返回一个经典有解组合 3,3,8,8 => 8/(3-8/3)=24
+        return [3,3,8,8];
+    }
+
+    // 重置/新游戏
+    function newGame() {
+        // 生成有解的数字组合
+        const numbers = generateSolvableNumbers();
+        // 重置卡片数组
+        cards = [];
+        nextCardId = 0;
+        numbers.forEach(val => {
+            cards.push({
+                id: nextCardId++,
+                value: val,
+                used: false
+            });
+        });
+        // 重置表达式和栈
+        tokens = [];
+        cardIdStack = [];
+        renderUI();
+        setMessage(`新牌组: ${numbers.map(n=> (n===11?'J':n===12?'Q':n===13?'K':n)).join(', ')}  组合有解，加油！`, false);
+    }
+
+    // ---------- 事件绑定 ----------
+    function bindEvents() {
+        // 运算符与括号按钮
+        const opBtns = document.querySelectorAll('[data-op]');
+        opBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                let op = btn.getAttribute('data-op');
+                // 对于显示为✕ ÷ 但存储符号为 * / ，按钮值已经是*/ 正确。
+                if(op === '*') addOperatorOrBracket('*');
+                else if(op === '/') addOperatorOrBracket('/');
+                else addOperatorOrBracket(op);
+            });
+        });
+        document.getElementById('delBtn').addEventListener('click', deleteLastToken);
+        document.getElementById('clearBtn').addEventListener('click', clearAll);
+        document.getElementById('submitBtn').addEventListener('click', checkAndSubmit);
+        document.getElementById('newGameBtn').addEventListener('click', () => {
+            newGame();
+        });
+    }
+
+    // 初始化
+    function init() {
+        bindEvents();
+        newGame();
+    }
+
+    init();
+</script>
+</body>
+</html>
