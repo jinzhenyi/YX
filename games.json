@@ -63,11 +63,11 @@
     },
     {
       "id": 7,
-      "title": "测试",
-      "file": "hollewould.html",
+      "title": "24点",
+      "file": "24.html",
       "category": "益智",
-      "description": "测试。",
-      "icon": "fa-gem",
+      "description": "24点",
+      "icon": "cards-blank",
       "author": "jzy",
       "version": "1.0"
     }
