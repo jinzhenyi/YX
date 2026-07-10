@@ -604,9 +604,14 @@
                 const icon = game.icon || getCategoryIcon(game.category);
                 const bgColor = getCategoryColor(game.category);
                 
+                // 渲染图标: fa- 前缀用 FontAwesome，否则当文本/emoji
+                const iconHtml = icon.includes('fa-')
+                    ? `<i class="fas ${icon}"></i>`
+                    : `<span style="font-size:3rem;filter:brightness(0) invert(1)">${icon}</span>`;
+
                 gameCard.innerHTML = `
                     <div class="card-img" style="background: ${bgColor}">
-                        <i class="fas ${icon}"></i>
+                        ${iconHtml}
                         <h3 class="game-title">${game.title}</h3>
                     </div>
                     <div class="card-content">

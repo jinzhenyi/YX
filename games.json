@@ -16,7 +16,7 @@
       "file": "贪吃蛇.html",
       "category": "休闲",
       "description": "经典贪吃蛇游戏，控制小蛇吃掉食物，避免撞到自己。",
-      "icon": "fa-snake",
+      "icon": "🐍",
       "author": "jzy",
       "version": "1.0"
     },
@@ -67,7 +67,27 @@
       "file": "24.html",
       "category": "益智",
       "description": "24点",
-      "icon": "cards-blank",
+      "icon": "♠️",
+      "author": "jzy",
+      "version": "1.0"
+    },
+    {
+      "id": 8,
+      "title": "打砖块",
+      "file": "打砖块.html",
+      "category": "经典",
+      "description": "经典打砖块游戏，反弹球消除所有砖块过关，含5种关卡布局。",
+      "icon": "fa-cubes",
+      "author": "jzy",
+      "version": "1.0"
+    },
+    {
+      "id": 9,
+      "title": "五子棋",
+      "file": "五子棋.html",
+      "category": "策略",
+      "description": "双人五子棋，标准15x15棋盘，五连珠获胜，支持悔棋。",
+      "icon": "fa-chess-board",
       "author": "jzy",
       "version": "1.0"
     }

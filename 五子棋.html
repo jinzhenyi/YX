@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<title>五子棋</title>
+<style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: linear-gradient(135deg, #1a120b, #2c1810, #1a0f0a);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+}
+.game-wrapper { display: flex; flex-direction: column; align-items: center; gap: 8px; }
+
+.header-bar {
+    display: flex; align-items: center; justify-content: space-between;
+    width: 560px; padding: 0 4px;
+}
+.back-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #e8d5b7; padding: 8px 16px; border-radius: 20px;
+    cursor: pointer; font-size: 0.9rem; transition: all 0.25s;
+    text-decoration: none; display: flex; align-items: center; gap: 6px;
+}
+.back-btn:hover { background: rgba(255,255,255,0.18); }
+
+.turn-indicator {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 1.05rem; color: #e8d5b7; font-weight: 600;
+}
+.turn-stone {
+    width: 22px; height: 22px; border-radius: 50%;
+    box-shadow: 0 0 8px rgba(0,0,0,0.4);
+    transition: all 0.3s;
+}
+.turn-stone.black { background: radial-gradient(circle at 35% 35%, #555, #111); }
+.turn-stone.white { background: radial-gradient(circle at 35% 35%, #fff, #ccc); }
+
+.action-btns { display: flex; gap: 6px; }
+.action-btn {
+    background: rgba(255,255,255,0.1);
+    border: 1px solid rgba(255,255,255,0.18);
+    color: #e8d5b7; padding: 8px 14px; border-radius: 20px;
+    cursor: pointer; font-size: 0.85rem; transition: all 0.25s;
+}
+.action-btn:hover { background: rgba(255,255,255,0.18); }
+.action-btn:disabled { opacity: 0.35; cursor: default; }
+
+canvas {
+    border-radius: 14px;
+    box-shadow: 0 0 40px rgba(180, 120, 60, 0.2);
+    background: #d4a76a;
+}
+
+.win-overlay {
+    position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    background: rgba(0,0,0,0.7); border-radius: 14px;
+    pointer-events: none; opacity: 0; transition: opacity 0.35s; z-index: 10;
+}
+.win-overlay.active { opacity: 1; pointer-events: all; }
+.win-overlay h2 { font-size: 2.2rem; color: #ffd700; margin-bottom: 8px; text-shadow: 0 0 20px rgba(255,215,0,0.5); }
+.win-overlay .btn {
+    background: linear-gradient(135deg, #c8a45c, #8b6914);
+    border: none; color: #fff; padding: 14px 40px; border-radius: 28px;
+    font-size: 1.05rem; cursor: pointer; transition: all 0.3s; font-weight: 600; margin-top: 8px;
+}
+.win-overlay .btn:hover { transform: scale(1.05); box-shadow: 0 8px 25px rgba(200,164,92,0.4); }
+
+@media (max-width: 600px) {
+    .header-bar { width: 360px; flex-wrap: wrap; gap: 6px; justify-content: center; }
+    canvas { width: 360px; height: auto; }
+    .action-btn { padding: 6px 10px; font-size: 0.78rem; }
+    .win-overlay h2 { font-size: 1.6rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="game-wrapper">
+    <div class="header-bar">
+        <a href="javascript:history.back()" class="back-btn">&#8592; 返回</a>
+        <div class="turn-indicator">
+            轮到
+            <div class="turn-stone black" id="turnStone"></div>
+            <span id="turnText">黑方</span>
+        </div>
+        <div class="action-btns">
+            <button class="action-btn" id="undoBtn" disabled>悔棋</button>
+            <button class="action-btn" id="restartBtn">重新开始</button>
+        </div>
+    </div>
+
+    <div style="position:relative">
+        <canvas id="game" width="560" height="580"></canvas>
+        <div class="win-overlay" id="winOverlay">
+            <h2 id="winText"></h2>
+            <button class="btn" id="playAgainBtn">再来一局</button>
+        </div>
+    </div>
+</div>
+
+<script>
+(function() {
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const W = canvas.width, H = canvas.height;
+
+    const SIZE = 15;
+    const CELL = 34;
+    const MARGIN = 40;
+    const STONE_R = CELL / 2 - 1.5;
+
+    let board = [];         // board[row][col] = 0 (empty), 1 (black), 2 (white)
+    let currentPlayer = 1;  // 1 = black, 2 = white
+    let history = [];       // [{row, col, player}]
+    let gameOver = false;
+    let winLine = null;     // [{row, col}, ...] winning stones
+    let hoverCell = null;   // {row, col} mouse hover
+
+    const turnStone = document.getElementById('turnStone');
+    const turnText = document.getElementById('turnText');
+    const undoBtn = document.getElementById('undoBtn');
+    const winOverlay = document.getElementById('winOverlay');
+    const winText = document.getElementById('winText');
+
+    function initBoard() {
+        board = [];
+        for (let r = 0; r < SIZE; r++) { board[r] = []; for (let c = 0; c < SIZE; c++) board[r][c] = 0; }
+        currentPlayer = 1;
+        history = [];
+        gameOver = false;
+        winLine = null;
+        hoverCell = null;
+        updateTurnUI();
+        undoBtn.disabled = true;
+        winOverlay.classList.remove('active');
+        draw();
+    }
+
+    function updateTurnUI() {
+        if (gameOver) {
+            turnStone.className = 'turn-stone black';
+            turnText.textContent = '游戏结束';
+            return;
+        }
+        turnStone.className = 'turn-stone ' + (currentPlayer === 1 ? 'black' : 'white');
+        turnText.textContent = currentPlayer === 1 ? '黑方' : '白方';
+    }
+
+    function placeStone(row, col) {
+        board[row][col] = currentPlayer;
+        history.push({ row, col, player: currentPlayer });
+
+        let result = checkWin(row, col);
+        if (result) {
+            gameOver = true;
+            winLine = result;
+            let winner = currentPlayer === 1 ? '黑方' : '白方';
+            winText.textContent = winner + '获胜!';
+            winOverlay.classList.add('active');
+        } else if (history.length === SIZE * SIZE) {
+            gameOver = true;
+            winText.textContent = '平局!';
+            winOverlay.classList.add('active');
+        }
+
+        currentPlayer = currentPlayer === 1 ? 2 : 1;
+        updateTurnUI();
+        undoBtn.disabled = history.length === 0;
+        draw();
+    }
+
+    function undo() {
+        if (gameOver || history.length === 0) return;
+        let last = history.pop();
+        board[last.row][last.col] = 0;
+        currentPlayer = last.player;
+        winLine = null;
+        gameOver = false;
+        updateTurnUI();
+        undoBtn.disabled = history.length === 0;
+        draw();
+    }
+
+    function checkWin(row, col) {
+        let player = board[row][col];
+        let dirs = [[0,1],[1,0],[1,1],[1,-1]];
+
+        for (let [dr, dc] of dirs) {
+            let stones = [{row, col}];
+            // Forward
+            for (let i = 1; i < 5; i++) {
+                let r = row + dr * i, c = col + dc * i;
+                if (r >= 0 && r < SIZE && c >= 0 && c < SIZE && board[r][c] === player)
+                    stones.push({row: r, col: c});
+                else break;
+            }
+            // Backward
+            for (let i = 1; i < 5; i++) {
+                let r = row - dr * i, c = col - dc * i;
+                if (r >= 0 && r < SIZE && c >= 0 && c < SIZE && board[r][c] === player)
+                    stones.unshift({row: r, col: c});
+                else break;
+            }
+            if (stones.length >= 5) return stones;
+        }
+        return null;
+    }
+
+    function getCellFromPos(px, py) {
+        let rect = canvas.getBoundingClientRect();
+        let sx = W / rect.width, sy = H / rect.height;
+        let mx = (px - rect.left) * sx, my = (py - rect.top) * sy;
+
+        let col = Math.round((mx - MARGIN) / CELL);
+        let row = Math.round((my - MARGIN) / CELL);
+
+        if (row < 0 || row >= SIZE || col < 0 || col >= SIZE) return null;
+        let cx = MARGIN + col * CELL, cy = MARGIN + row * CELL;
+        let dist = Math.sqrt((mx - cx) ** 2 + (my - cy) ** 2);
+        if (dist > STONE_R + 6) return null;
+        return { row, col };
+    }
+
+    function draw() {
+        ctx.clearRect(0, 0, W, H);
+
+        // Board background - wood texture effect
+        let bg = ctx.createLinearGradient(0, 0, W, H);
+        bg.addColorStop(0, '#d4a76a');
+        bg.addColorStop(0.5, '#c9975a');
+        bg.addColorStop(1, '#b8844c');
+        ctx.fillStyle = bg;
+        ctx.fillRect(0, 0, W, H);
+
+        // Board inner panel
+        let bx = MARGIN - 16, by = MARGIN - 16;
+        let bw = (SIZE - 1) * CELL + 32, bh = (SIZE - 1) * CELL + 32;
+        ctx.fillStyle = '#e8c97a';
+        ctx.beginPath();
+        ctx.roundRect(bx, by, bw, bh, 8);
+        ctx.fill();
+        ctx.strokeStyle = '#8b6914';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Grid lines
+        ctx.strokeStyle = '#6b4c1a';
+        ctx.lineWidth = 0.8;
+        for (let i = 0; i < SIZE; i++) {
+            ctx.beginPath();
+            ctx.moveTo(MARGIN, MARGIN + i * CELL);
+            ctx.lineTo(MARGIN + (SIZE - 1) * CELL, MARGIN + i * CELL);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(MARGIN + i * CELL, MARGIN);
+            ctx.lineTo(MARGIN + i * CELL, MARGIN + (SIZE - 1) * CELL);
+            ctx.stroke();
+        }
+
+        // Star points
+        let stars = [3, 7, 11];
+        for (let r of stars) for (let c of stars) {
+            ctx.fillStyle = '#3d280b';
+            ctx.beginPath();
+            ctx.arc(MARGIN + c * CELL, MARGIN + r * CELL, 3.5, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Draw stones
+        for (let r = 0; r < SIZE; r++) for (let c = 0; c < SIZE; c++) {
+            if (board[r][c] === 0) continue;
+            let cx = MARGIN + c * CELL, cy = MARGIN + r * CELL;
+
+            // Check if this stone is in win line
+            let isWin = winLine && winLine.some(s => s.row === r && s.col === c);
+            if (isWin) {
+                ctx.save();
+                ctx.shadowColor = '#ffd700';
+                ctx.shadowBlur = 16;
+            }
+
+            drawStone(cx, cy, board[r][c], STONE_R);
+
+            if (isWin) {
+                ctx.shadowBlur = 0;
+                ctx.restore();
+                // Pulsing glow
+                let pulse = 0.5 + 0.5 * Math.sin(Date.now() / 300);
+                ctx.strokeStyle = `rgba(255,215,0,${pulse * 0.7})`;
+                ctx.lineWidth = 2.5;
+                ctx.beginPath();
+                ctx.arc(cx, cy, STONE_R + 3, 0, Math.PI * 2);
+                ctx.stroke();
+            }
+        }
+
+        // Last move marker
+        if (history.length > 0) {
+            let last = history[history.length - 1];
+            let cx = MARGIN + last.col * CELL, cy = MARGIN + last.row * CELL;
+            ctx.fillStyle = last.player === 1 ? '#ff4444' : '#ff4444';
+            ctx.beginPath();
+            ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        // Hover preview
+        if (hoverCell && !gameOver && board[hoverCell.row][hoverCell.col] === 0) {
+            let cx = MARGIN + hoverCell.col * CELL, cy = MARGIN + hoverCell.row * CELL;
+            ctx.globalAlpha = 0.4;
+            drawStone(cx, cy, currentPlayer, STONE_R);
+            ctx.globalAlpha = 1;
+        }
+    }
+
+    function drawStone(cx, cy, player, r) {
+        if (player === 1) {
+            let grad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
+            grad.addColorStop(0, '#555');
+            grad.addColorStop(0.6, '#222');
+            grad.addColorStop(1, '#000');
+            ctx.fillStyle = grad;
+        } else {
+            let grad = ctx.createRadialGradient(cx - r*0.3, cy - r*0.3, r*0.1, cx, cy, r);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.6, '#e8e8e8');
+            grad.addColorStop(1, '#bbb');
+            ctx.fillStyle = grad;
+        }
+        ctx.beginPath();
+        ctx.arc(cx, cy, r, 0, Math.PI * 2);
+        ctx.fill();
+    }
+
+    function gameLoop() {
+        if (gameOver && winLine) {
+            // Redraw for pulsing glow
+            draw();
+        }
+        requestAnimationFrame(gameLoop);
+    }
+
+    // Events
+    canvas.addEventListener('mousemove', e => {
+        let cell = getCellFromPos(e.clientX, e.clientY);
+        if (cell && board[cell.row][cell.col] === 0 && !gameOver) {
+            if (!hoverCell || hoverCell.row !== cell.row || hoverCell.col !== cell.col) {
+                hoverCell = cell;
+                draw();
+            }
+        } else if (hoverCell) {
+            hoverCell = null;
+            draw();
+        }
+    });
+
+    canvas.addEventListener('mouseleave', () => { hoverCell = null; draw(); });
+
+    canvas.addEventListener('click', e => {
+        if (gameOver) return;
+        let cell = getCellFromPos(e.clientX, e.clientY);
+        if (!cell || board[cell.row][cell.col] !== 0) return;
+        placeStone(cell.row, cell.col);
+    });
+
+    canvas.addEventListener('touchstart', e => {
+        e.preventDefault();
+        if (gameOver) return;
+        let cell = getCellFromPos(e.touches[0].clientX, e.touches[0].clientY);
+        if (!cell || board[cell.row][cell.col] !== 0) return;
+        placeStone(cell.row, cell.col);
+    }, { passive: false });
+
+    document.getElementById('undoBtn').addEventListener('click', undo);
+    document.getElementById('restartBtn').addEventListener('click', initBoard);
+    document.getElementById('playAgainBtn').addEventListener('click', initBoard);
+
+    initBoard();
+    gameLoop();
+})();
+</script>
+</body>
+</html>
