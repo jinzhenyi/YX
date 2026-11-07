@@ -55,10 +55,10 @@
       "title": "轮回勇者传说",
       "file": "lhyzch/index.html",
       "category": "角色扮演",
-      "description": "原链接https://github.com/Couy69/vue-idle-game 一款开源的Roguelike角色扮演游戏，拥有丰富的剧情和随机生成的地下城。",
+      "description": "原链接https://github.com/Couy69/vue-idle-game 一款开源的Roguelike角色扮演游戏，拥有丰富的剧情和随机生成的地下城。Copyright (c) 2020 couy69@gmail.com",
       "icon": "fa-dragon",
       "author": "couy69@gmail.com",
-      "license": "Copyright (c) 2020 couy69@gmail.com MIT",
+      "license": "MIT",
       "version": "1.3.3"
     },
     {
